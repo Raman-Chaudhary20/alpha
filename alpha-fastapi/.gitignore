@@ -63,3 +63,8 @@ Thumbs.db
 
 # Docker
 *.log
+
+# Local env copies and the memory database (holds everyone's chats)
+_env
+data/*.db
+data/*.db-*

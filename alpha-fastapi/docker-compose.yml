@@ -8,6 +8,8 @@ services:
     env_file: .env
     volumes:
       - ./data:/app/data
+      # Bedrock: the AWS sign-in of AWS_PROFILE, read-only. Not needed on a server with an instance role.
+      - ${HOME}/.aws:/root/.aws:ro
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/')"]

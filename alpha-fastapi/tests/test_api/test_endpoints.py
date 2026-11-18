@@ -10,12 +10,11 @@ from fastapi.testclient import TestClient
 from app.config import Settings
 from app.main import create_app
 from app.services.file_service import FileService
-from app.services.groq_service import GroqService
+from app.services.bedrock_service import Brain
 
 
 def _make_client(tmp_path, groq_answer: str = "Test answer") -> TestClient:
     settings = Settings(
-        groq_api_key="test-key",
         slack_bot_token="",
         slack_app_token="",
         data_dir=str(tmp_path / "data"),
@@ -23,19 +22,19 @@ def _make_client(tmp_path, groq_answer: str = "Test answer") -> TestClient:
     fs = FileService(data_dir=settings.data_dir)
     fs.ensure_data_dir()
 
-    mock_groq = MagicMock(spec=GroqService)
+    mock_groq = MagicMock(spec=Brain)
     mock_groq.ask_bot = AsyncMock(return_value=groq_answer)
 
     app = create_app(settings=settings)
     app.state.settings = settings
     app.state.file_service = fs
-    app.state.groq_service = mock_groq
+    app.state.brain = mock_groq
     app.state.slack_service = None
 
     client = TestClient(app, raise_server_exceptions=True)
     # Patch state after lifespan to keep our mocks
     client.app.state.file_service = fs
-    client.app.state.groq_service = mock_groq
+    client.app.state.brain = mock_groq
     client.app.state.slack_service = None
     return client
 
@@ -99,7 +98,6 @@ class TestHistoryEndpoint:
 
     def test_get_history_with_content(self, tmp_path):
         settings = Settings(
-            groq_api_key="test-key",
             slack_bot_token="",
             slack_app_token="",
             data_dir=str(tmp_path / "data"),
@@ -108,18 +106,18 @@ class TestHistoryEndpoint:
         fs.ensure_data_dir()
         fs.save_conversation("api", "tester", "What is 2+2?", "4")
 
-        mock_groq = MagicMock(spec=GroqService)
+        mock_groq = MagicMock(spec=Brain)
         mock_groq.ask_bot = AsyncMock(return_value="4")
 
         app = create_app(settings=settings)
         app.state.settings = settings
         app.state.file_service = fs
-        app.state.groq_service = mock_groq
+        app.state.brain = mock_groq
         app.state.slack_service = None
 
         with TestClient(app) as c:
             c.app.state.file_service = fs
-            c.app.state.groq_service = mock_groq
+            c.app.state.brain = mock_groq
             c.app.state.slack_service = None
             resp = c.get("/api/v1/history")
         assert resp.status_code == 200

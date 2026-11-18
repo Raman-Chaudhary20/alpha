@@ -7,6 +7,7 @@ import logging
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from app.config import Settings
+from app.services.memory_service import MemoryBuilder
 from app.services.slack_service import SlackService
 
 logger = logging.getLogger(__name__)
@@ -14,41 +15,53 @@ logger = logging.getLogger(__name__)
 _scheduler: AsyncIOScheduler | None = None
 
 
-def start_scheduler(slack_service: SlackService, settings: Settings) -> None:
-    """Create and start the global scheduler with Slack sync jobs."""
+def start_scheduler(slack_service: SlackService, memory: MemoryBuilder, settings: Settings) -> None:
+    """Read Slack often, people every 10 minutes, and rebuild the memory on its own clock."""
     global _scheduler  # noqa: PLW0603
 
     _scheduler = AsyncIOScheduler(timezone="UTC")
-
     _scheduler.add_job(
         slack_service.sync_slack,
         trigger="interval",
         minutes=settings.slack_sync_minutes,
         id="sync_slack",
-        name="Slack channel sync",
+        name="Read every reachable Slack conversation",
         replace_existing=True,
         misfire_grace_time=30,
+        max_instances=1,
+        coalesce=True,
     )
-
     _scheduler.add_job(
         slack_service.sync_members,
         trigger="interval",
         minutes=10,
         id="sync_members",
-        name="Slack member sync",
+        name="Slack people",
         replace_existing=True,
         misfire_grace_time=30,
+        max_instances=1,
+        coalesce=True,
     )
-
+    _scheduler.add_job(
+        memory.build,
+        trigger="interval",
+        minutes=settings.memory_build_minutes,
+        id="build_memory",
+        name="Day summaries and the register of projects and people",
+        replace_existing=True,
+        misfire_grace_time=120,
+        max_instances=1,
+        coalesce=True,
+    )
     _scheduler.start()
     logger.info(
-        "Scheduler started: channel sync every %d min, member sync every 10 min",
+        "Scheduler started: Slack every %d min, people every 10 min, memory every %d min",
         settings.slack_sync_minutes,
+        settings.memory_build_minutes,
     )
 
 
 def stop_scheduler() -> None:
-    """Shut down the global scheduler if it is running."""
     global _scheduler  # noqa: PLW0603
     if _scheduler and _scheduler.running:
         _scheduler.shutdown(wait=False)

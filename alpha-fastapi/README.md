@@ -1,4 +1,7 @@
 
+
+> **Alpha 2.0:** Alpha now reads every conversation it is allowed to (channels, and the DMs of people who sign in), removes repeats, keeps a list of projects and people, and answers with Claude on Amazon Bedrock instead of Groq. How to ask it questions, how to sign in, and how to set it up: **[ALPHA-GUIDE.md](ALPHA-GUIDE.md)**. Parts of this README below still describe the earlier Groq version.
+
 <div align="center">
 
 # 🤖 Alpha — Slack AI Bot

@@ -1,7 +1,7 @@
 [project]
 name = "alpha-fastapi"
-version = "1.0.0"
-description = "Groq-powered Slack AI assistant (Alpha) — FastAPI edition"
+version = "2.0.0"
+description = "Alpha: the Slack memory bot. Reads every conversation it may, removes repeats, and answers with Claude on Amazon Bedrock."
 readme = "README.md"
 requires-python = ">=3.12"
 license = { text = "MIT" }
@@ -11,7 +11,11 @@ dependencies = [
     "uvicorn[standard]>=0.30.0",
     "pydantic>=2.0.0",
     "pydantic-settings>=2.0.0",
-    "groq>=0.9.0",
+    "boto3>=1.35.0",
+    "cryptography>=42.0.0",
+    "pypdf>=4.0.0",
+    "python-docx>=1.1.0",
+    "openpyxl>=3.1.0",
     "slack-sdk>=3.27.0",
     "slack-bolt>=1.18.0",
     "aiohttp>=3.9.0",
